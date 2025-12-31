@@ -1,0 +1,78 @@
+(() => {
+  const shareBtn = document.getElementById("shareBtn");
+  const copyTemplateBtn = document.getElementById("copyTemplateBtn");
+  const copyLinkBtn = document.getElementById("copyLinkBtn");
+  const toastEl = document.getElementById("toast");
+
+  // Keep this generic + non-identifying.
+  const DEFAULT_TITLE = "Uplink";
+  const DEFAULT_TEXT =
+    "Quick reference from my journal:\n" +
+    "Book: ___\n" +
+    "Page/Section: ___\n" +
+    "What it was: ___\n" +
+    "Notes: ___";
+
+  function toast(msg) {
+    if (!toastEl) return;
+    toastEl.textContent = msg;
+    toastEl.style.display = "block";
+    clearTimeout(toastEl._t);
+    toastEl._t = setTimeout(() => (toastEl.style.display = "none"), 2200);
+  }
+
+  async function copyToClipboard(text) {
+    try {
+      await navigator.clipboard.writeText(text);
+      return true;
+    } catch {
+      const ta = document.createElement("textarea");
+      ta.value = text;
+      ta.setAttribute("readonly", "");
+      ta.style.position = "fixed";
+      ta.style.top = "-9999px";
+      document.body.appendChild(ta);
+      ta.select();
+      try {
+        const ok = document.execCommand("copy");
+        document.body.removeChild(ta);
+        return ok;
+      } catch {
+        document.body.removeChild(ta);
+        return false;
+      }
+    }
+  }
+
+  async function openNativeShare() {
+    const shareData = {
+      title: DEFAULT_TITLE,
+      text: DEFAULT_TEXT,
+      url: window.location.href
+    };
+
+    if (navigator.share) {
+      try {
+        await navigator.share(shareData);
+        return;
+      } catch {
+        // user canceled or failed — fall back to copy
+      }
+    }
+
+    const ok = await copyToClipboard(DEFAULT_TEXT + "\n\n" + window.location.href);
+    toast(ok ? "Copied. Paste into Notes / Email / Text." : "Copy failed on this device.");
+  }
+
+  shareBtn?.addEventListener("click", openNativeShare);
+
+  copyTemplateBtn?.addEventListener("click", async () => {
+    const ok = await copyToClipboard(DEFAULT_TEXT);
+    toast(ok ? "Template copied." : "Copy failed on this device.");
+  });
+
+  copyLinkBtn?.addEventListener("click", async () => {
+    const ok = await copyToClipboard(window.location.href);
+    toast(ok ? "Link copied." : "Copy failed on this device.");
+  });
+})();
