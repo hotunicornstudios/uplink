@@ -1,78 +1,146 @@
-(() => {
-  const shareBtn = document.getElementById("shareBtn");
-  const copyTemplateBtn = document.getElementById("copyTemplateBtn");
-  const copyLinkBtn = document.getElementById("copyLinkBtn");
-  const toastEl = document.getElementById("toast");
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Uplink</title>
 
-  // Keep this generic + non-identifying.
-  const DEFAULT_TITLE = "Uplink";
-  const DEFAULT_TEXT =
-    "Quick reference from my journal:\n" +
-    "Book: ___\n" +
-    "Page/Section: ___\n" +
-    "What it was: ___\n" +
-    "Notes: ___";
-
-  function toast(msg) {
-    if (!toastEl) return;
-    toastEl.textContent = msg;
-    toastEl.style.display = "block";
-    clearTimeout(toastEl._t);
-    toastEl._t = setTimeout(() => (toastEl.style.display = "none"), 2200);
-  }
-
-  async function copyToClipboard(text) {
-    try {
-      await navigator.clipboard.writeText(text);
-      return true;
-    } catch {
-      const ta = document.createElement("textarea");
-      ta.value = text;
-      ta.setAttribute("readonly", "");
-      ta.style.position = "fixed";
-      ta.style.top = "-9999px";
-      document.body.appendChild(ta);
-      ta.select();
-      try {
-        const ok = document.execCommand("copy");
-        document.body.removeChild(ta);
-        return ok;
-      } catch {
-        document.body.removeChild(ta);
-        return false;
-      }
+  <style>
+    html, body { height: 100%; margin: 0; background: #fff; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; }
+    .wrap { height: 100%; display: grid; place-items: center; padding: 24px; }
+    .card { width: min(520px, 92vw); text-align: center; }
+    .btn { border: none; background: none; padding: 0; cursor: pointer; }
+    .logo { width: 180px; height: auto; display:block; margin: 0 auto; }
+    .sub { margin: 14px 0 0; font-size: 13px; color: #666; line-height: 1.35; }
+    .row { margin-top: 12px; display: grid; gap: 10px; }
+    .smallbtn {
+      width: 100%;
+      padding: 12px 14px;
+      border-radius: 12px;
+      border: 1px solid #eee;
+      background: #fafafa;
+      font-size: 14px;
+      cursor: pointer;
     }
-  }
-
-  async function openNativeShare() {
-    const shareData = {
-      title: DEFAULT_TITLE,
-      text: DEFAULT_TEXT,
-      url: window.location.href
-    };
-
-    if (navigator.share) {
-      try {
-        await navigator.share(shareData);
-        return;
-      } catch {
-        // user canceled or failed — fall back to copy
-      }
+    .toast {
+      position: fixed;
+      left: 50%;
+      bottom: 18px;
+      transform: translateX(-50%);
+      background: rgba(0,0,0,0.82);
+      color: #fff;
+      padding: 10px 12px;
+      border-radius: 10px;
+      font-size: 13px;
+      max-width: 92vw;
+      display: none;
     }
+  </style>
+</head>
 
-    const ok = await copyToClipboard(DEFAULT_TEXT + "\n\n" + window.location.href);
-    toast(ok ? "Copied. Paste into Notes / Email / Text." : "Copy failed on this device.");
-  }
+<body>
+  <div class="wrap">
+    <div class="card">
 
-  shareBtn?.addEventListener("click", openNativeShare);
+      <!-- Your button image MUST be named logo.png in the repo root -->
+      <button class="btn" id="shareBtn" type="button" aria-label="Save / Share">
+        <img class="logo" src="logo.png" alt="Save / Share" onerror="this.style.display='none'">
+      </button>
 
-  copyTemplateBtn?.addEventListener("click", async () => {
-    const ok = await copyToClipboard(DEFAULT_TEXT);
-    toast(ok ? "Template copied." : "Copy failed on this device.");
-  });
+      <p class="sub">
+        Optional: tap to open your phone’s share options to save a quick reference (book/page/section/what it was),
+        send a reminder to yourself, record a voice memo, or attach an image—only if you choose.
+      </p>
 
-  copyLinkBtn?.addEventListener("click", async () => {
-    const ok = await copyToClipboard(window.location.href);
-    toast(ok ? "Link copied." : "Copy failed on this device.");
-  });
-})();
+      <div class="row">
+        <button class="smallbtn" id="copyTemplateBtn" type="button">Copy a quick index template</button>
+        <button class="smallbtn" id="copyLinkBtn" type="button">Copy this Uplink link</button>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    (() => {
+      const shareBtn = document.getElementById("shareBtn");
+      const copyTemplateBtn = document.getElementById("copyTemplateBtn");
+      const copyLinkBtn = document.getElementById("copyLinkBtn");
+      const toastEl = document.getElementById("toast");
+
+      const DEFAULT_TITLE = "Uplink";
+      const DEFAULT_TEXT =
+        "Quick reference from my journal:\n" +
+        "Book: ___\n" +
+        "Page/Section: ___\n" +
+        "What it was: ___\n" +
+        "Notes: ___";
+
+      function toast(msg) {
+        if (!toastEl) return;
+        toastEl.textContent = msg;
+        toastEl.style.display = "block";
+        clearTimeout(toastEl._t);
+        toastEl._t = setTimeout(() => (toastEl.style.display = "none"), 2200);
+      }
+
+      async function copyToClipboard(text) {
+        try {
+          await navigator.clipboard.writeText(text);
+          return true;
+        } catch {
+          const ta = document.createElement("textarea");
+          ta.value = text;
+          ta.setAttribute("readonly", "");
+          ta.style.position = "fixed";
+          ta.style.top = "-9999px";
+          document.body.appendChild(ta);
+          ta.select();
+          try {
+            const ok = document.execCommand("copy");
+            document.body.removeChild(ta);
+            return ok;
+          } catch {
+            document.body.removeChild(ta);
+            return false;
+          }
+        }
+      }
+
+      async function openNativeShare() {
+        const shareData = {
+          title: DEFAULT_TITLE,
+          text: DEFAULT_TEXT,
+          url: window.location.href
+        };
+
+        if (navigator.share) {
+          try {
+            await navigator.share(shareData);
+            return;
+          } catch {
+            // user canceled or failed — fall back to copy
+          }
+        }
+
+        const ok = await copyToClipboard(DEFAULT_TEXT + "\n\n" + window.location.href);
+        toast(ok ? "Copied. Paste into Notes / Email / Text." : "Copy failed on this device.");
+      }
+
+      shareBtn?.addEventListener("click", openNativeShare);
+
+      copyTemplateBtn?.addEventListener("click", async () => {
+        const ok = await copyToClipboard(DEFAULT_TEXT);
+        toast(ok ? "Template copied." : "Copy failed on this device.");
+      });
+
+      copyLinkBtn?.addEventListener("click", async () => {
+        const ok = await copyToClipboard(window.location.href);
+        toast(ok ? "Link copied." : "Copy failed on this device.");
+      });
+    })();
+  </script>
+</body>
+</html>
+
